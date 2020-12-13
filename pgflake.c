@@ -7,6 +7,7 @@
 
 #include <time.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <inttypes.h>
 
 #define TIMESTAMP_BITS 41L
@@ -49,16 +50,18 @@ Datum pgflake_generate(PG_FUNCTION_ARGS);
 
 void _PG_init(void)
 {
-    char *tmp_string_start_epoch;
+    char *tmp_start_epoch;
+    char *endPtr;
+    int tmp_instance_id;
 
     DefineCustomIntVariable("pgflake.instance_id",
                             "Sets the id of current intance. It must be unique between instances.",
                             NULL,
-                            &pgflake_instance_id,
+                            &tmp_instance_id,
                             1,
                             1,
                             MAX_INSTANCE_ID,
-                            PGC_S_GLOBAL,
+                            PGC_SUSET,
                             0,
                             NULL,
                             NULL,
@@ -67,15 +70,23 @@ void _PG_init(void)
     DefineCustomStringVariable("pgflake.start_epoch",
                                "Sets the start epoch of current intance.",
                                NULL,
-                               &tmp_string_start_epoch,
+                               &tmp_start_epoch,
                                "1314220021721",
-                               PGC_S_GLOBAL,
+                               PGC_SUSET,
                                0,
                                NULL,
                                NULL,
                                NULL);
 
-    sscanf(tmp_string_start_epoch, "%" SCNu64, &pgflake_start_epoch);
+    pgflake_instance_id = (uint16_t)tmp_instance_id;
+
+    pgflake_start_epoch = strtoull(tmp_start_epoch, &endPtr, 10);
+
+    if (*endPtr)
+        ereport(ERROR,
+                (errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+                 errmsg("invalid start_epoch '%s'",
+                        tmp_start_epoch)));
 
     SpinLockInit(&mutex);
 }
@@ -103,7 +114,6 @@ static uint64_t
 generate_id()
 {
     uint64_t curr_time = 0;
-    uint64_t result = 0;
 
     curr_time = time_get_curr_unix_msec();
 

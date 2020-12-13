@@ -20,7 +20,6 @@ You should use NTP to keep your system clock accurate. It protects from non-mono
 environment (header files) (e.g., `postgresql-server-dev-11 `package
 for Linux, Postgres.app for MacOS)
 - C compiler (e.g., gcc or clang)
-- [CMake](https://cmake.org/) version 3.4 or greater
 
 ```bash
 git clone https://github.com/mausimag/pgflake.git

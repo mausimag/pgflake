@@ -1,0 +1,2 @@
+test: check_dups
+test: parsers

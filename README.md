@@ -1,4 +1,4 @@
-## PostgreSQL Notification Extension
+## PostgreSQL Snowflake Extension
 
 A snowflake algorithm implemented as Postgres Extension. It uses time as first component and remain sortable. Ids are 64-bits, half the size of a UUID.
 

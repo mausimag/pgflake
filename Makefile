@@ -22,5 +22,5 @@ regress:
 	/usr/lib/postgresql/13/lib/pgxs/src/test/regress/pg_regress --schedule=test_schedule
 
 perf:
-	# ./scripts/run_sql.sh > ./scripts/plot.tsv
+	./scripts/run_sql.sh > ./scripts/plot.tsv
 	gnuplot -p ./scripts/plot.gnu < ./scripts/plot.tsv

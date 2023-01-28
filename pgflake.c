@@ -100,40 +100,25 @@ time_get_curr_unix_msec()
 }
 
 static uint64_t
-wait_time(uint64_t last_time)
-{
-    uint64_t tmst = time_get_curr_unix_msec();
-
-    while (tmst <= last_time)
-        tmst = time_get_curr_unix_msec();
-
-    return tmst;
-}
-
-static uint64_t
 generate_id()
 {
     uint64_t curr_time = 0;
 
-    curr_time = time_get_curr_unix_msec();
-
-    if (curr_time < last_time)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-                 errmsg("clock is moving backwards, rejecting requests until %" PRIu64 " and refusing to generate id for %" PRIu64,
-                        last_time,
-                        last_time - curr_time)));
-    }
-
     SpinLockAcquire(&mutex);
+
+    curr_time = time_get_curr_unix_msec() - pgflake_start_epoch;
 
     if (last_time == curr_time)
     {
         sequence = (sequence + 1) & SEQUENCE_MASK;
 
         if (sequence == 0)
-            curr_time = wait_time(last_time);
+        {
+            while (curr_time <= last_time)
+            {
+                curr_time = time_get_curr_unix_msec() - curr_time;
+            }
+        }
     }
     else
         sequence = 0;
@@ -142,7 +127,7 @@ generate_id()
 
     SpinLockRelease(&mutex);
 
-    return ((curr_time - pgflake_start_epoch) << TIMESTAMP_SHIFT) |
+    return (curr_time << TIMESTAMP_SHIFT) |
            ((uint64_t)pgflake_instance_id << INSTANCE_SHIFT) |
            sequence;
 }

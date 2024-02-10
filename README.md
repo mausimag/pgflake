@@ -1,25 +1,23 @@
 ## PostgreSQL Snowflake Extension
 
-A snowflake algorithm implemented as Postgres Extension. It uses time as first component and remain sortable. Ids are 64-bits, half the size of a UUID.
+A snowflake algorithm implemented as a Postgres Extension. It uses time as the first component and remains sortable. IDs are 64 bits, half the size of a UUID.
 
-###  Solution
+### Solution
 
-ID is composed of:
+The ID is composed of:
 
-  - time - 41 bits (millisecond precision w/ a custom epoch gives us 69 years)
-  - instance id - 10 bits - gives us up to 1024 postgres instances
-  - sequence number - 12 bits - rolls over every 4096 per machine (with protection to avoid rollover in the same ms)
+- Time - 41 bits (millisecond precision with a custom epoch gives us 69 years)
+- Instance ID - 10 bits - gives us up to 1024 postgres instances
+- Sequence number - 12 bits - rolls over every 4096 per machine (with protection to avoid rollover in the same ms)
 
 ### System Clock Dependency
 
-You should use NTP to keep your system clock accurate. It protects from non-monotonic clocks, i.e. clocks that run backwards.
+You should use NTP to keep your system clock accurate. It protects from non-monotonic clocks, i.e., clocks that run backwards.
 
-## Building from source
+## Building from Source
 
-- A standard PostgreSQL 12 or 11.4+ installation with development
-environment (header files) (e.g., `postgresql-server-dev-11 `package
-for Linux, Postgres.app for MacOS)
-- C compiler (e.g., gcc or clang)
+- A standard PostgreSQL 12 or 11.4+ installation with a development environment (header files) (e.g., `postgresql-server-dev-11` package for Linux, Postgres.app for MacOS)
+- C compiler (e.g., GCC or Clang)
 
 ```bash
 git clone https://github.com/mausimag/pgflake.git
@@ -30,15 +28,15 @@ sudo make install
 
 ## Configuring
 
-You must configure the two following parameters before using:
+You must configure the following two parameters before using:
 
-    pgflake.instance_id: Sets the id of current intance. It must be unique between instances.
+    pgflake.instance_id: Sets the ID of the current instance. It must be unique between instances.
 
-    pgflake.start_epoch: Sets the start epoch of current intance.
+    pgflake.start_epoch: Sets the start epoch of the current instance.
 
 ## Using pgflake
 
-To activate extension, in a database you can simply do:
+To activate the extension, in a database you can simply do:
 
     CREATE EXTENSION IF NOT EXISTS pgflake;
 
@@ -51,33 +49,33 @@ Create one table:
 
 Now insert some data:
 
-    INSERT INTO ttest (x) SELECT generate_series(1, 5);
+    INSERT INTO ttest (x) VALUES (generate_series(1, 5));
 
 Check generated IDs:
 
     SELECT * FROM ttest;
-    x |          y          
-    ---+---------------------
-    1 | 1231425388031266816
-    2 | 1231425388610080768
-    3 | 1231425388626857984
-    4 | 1231425388631052288
-    5 | 1231425388635246592
+      x |          y
+    ----+---------------------
+      1 | 1231425388031266816
+      2 | 1231425388610080768
+      3 | 1231425388626857984
+      4 | 1231425388631052288
+      5 | 1231425388635246592
     (5 rows)
 
-You can use the following functions to extract information of id:
+You can use the following functions to extract information from an ID:
 
     SELECT 
-    x
-    y,
-    pgflake_extract_time(y) as t, -- returns creation time of id
-    pgflake_extract_instance(y) as i, -- returns instance number
-    pgflake_extract_sequence(y) as s, -- returns the sequence number
+      x,
+      y,
+      pgflake_extract_time(y) as t, -- returns creation time of id
+      pgflake_extract_instance(y) as i, -- returns instance number
+      pgflake_extract_sequence(y) as s -- returns the sequence number
     FROM ttest;
 
-## Insert performance
+## Insert Performance
 
-![performance](scripts/out.png)
+![Performance](scripts/out.png)
 
 ## References
 
